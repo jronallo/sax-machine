@@ -19,7 +19,7 @@ describe "SAXMachine" do
       it "should allow introspection of the elements" do
         @klass.column_names.should =~ [:title]
       end
-      
+
       it "should not overwrite the getter is there is already one present" do
         @klass = Class.new do
           def title
@@ -32,7 +32,7 @@ describe "SAXMachine" do
         document.title = "Title"
         document.title.should == "Title ***"
       end
-            
+
       describe "the class attribute" do
         before(:each) do
           @klass = Class.new do
@@ -106,7 +106,7 @@ describe "SAXMachine" do
         document.name.should == "Paul"
         document.title.should == "My Title"
       end
-      
+
       it "should not overwrite the getter is there is already one present" do
         @klass = Class.new do
           def items
@@ -119,7 +119,7 @@ describe "SAXMachine" do
         document.items = [1,2,3,4]
         document.items.should == []
       end
-      
+
       it "should not overwrite the setter if there is already one present" do
         @klass = Class.new do
           def items=(val)
@@ -132,7 +132,7 @@ describe "SAXMachine" do
         document.items = [2,3]
         document.items.should == [1,2,3]
       end
-      
+
     end
 
     describe "when using options for parsing elements" do
@@ -306,6 +306,74 @@ describe "SAXMachine" do
           document.link_foo.should == 'test1'
           document.link_bar.should == 'test2'
         end
+      end
+
+      describe "when there is the has_mixed_content option and there is only one" do
+        before :each do
+          class Ink
+            include SAXMachine
+            has_mixed_content
+            elements :item, :as => :items
+          end
+          @klass = Class.new do
+            include SAXMachine
+            element :ink, :class => Ink
+          end
+
+        end
+        it "should have both mixed content and element values" do
+          document = @klass.parse("<ink foo='test'>hello <item>item text</item> and <item>item 2</item></ink>")
+          document.ink.items.should == ['item text', 'item 2']
+          document.ink.mixed_content.should == 'hello item text and item 2'
+        end
+      end
+
+      describe "when there is the has_mixed_content option and there is a collection of mixed content classes" do
+        before :each do
+          class Ink
+            include SAXMachine
+            has_mixed_content
+            elements :item, :as => :items
+          end
+          @klass = Class.new do
+            include SAXMachine
+            elements :ink, :as => :inks, :class => Ink
+          end
+
+        end
+        it "should have both mixed content and element values" do
+          document = @klass.parse("<xml><ink foo='test'>hello <item>item text</item> and <item>item 2</item></ink><ink foo='second'>this is the <item>second ink</item> and <item>fourth item</item></ink></xml>")
+          document.inks.first.items.should == ['item text', 'item 2']
+          document.inks.first.mixed_content.should == 'hello item text and item 2'
+        end
+      end
+
+      describe "when there is a mixed content element within a mixed content element" do
+        before :each do
+          class Item
+            include SAXMachine
+            has_mixed_content
+            elements :entry, :as => :entries
+          end
+          class Ink
+            include SAXMachine
+            has_mixed_content
+            elements :item, :as => :items, :class => Item
+          end
+          @klass = Class.new do
+            include SAXMachine
+            elements :ink, :as => :inks, :class => Ink
+          end
+        end
+
+        it 'should have mixed content all the way down' do
+          document = @klass.parse("<ink foo='test'>hello <item><entry>item</entry> 1 of <entry>text</entry></item> and <item>item 2</item></ink>")
+          document.inks.first.items.first.entries = ['item', 'text']
+          document.inks.first.items.first.mixed_content.should == 'item 1 of text'
+          document.inks.first.items.last.mixed_content.should == 'item 2'
+          document.inks.first.mixed_content.should == 'hello item 1 of text and item 2'
+        end
+
       end
 
     end
@@ -553,3 +621,4 @@ describe "SAXMachine" do
     end
   end
 end
+
