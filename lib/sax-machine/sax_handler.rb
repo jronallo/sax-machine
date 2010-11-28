@@ -66,7 +66,7 @@ module SAXMachine
     def end_element(name)
       (object, tag_config, _), (element, config, value) = stack[-2..-1]
       if stack.last.first.respond_to?(:mixed_content) and @mixed_content and @mixed_content[stack.last[1].name]
-        stack.last.first.mixed_content << @mixed_content[stack.last[1].name]
+        stack.last.first.mixed_content << @mixed_content[stack.last[1].name].gsub("\n", ' ').gsub(/\s+/, ' ')
         @mixed_content.delete(stack.last[1].name)
       end
       return unless stack.size > 1 && config && config.name.to_s == name.to_s

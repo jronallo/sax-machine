@@ -342,7 +342,8 @@ describe "SAXMachine" do
 
         end
         it "should have both mixed content and element values" do
-          document = @klass.parse("<xml><ink foo='test'>hello <item>item text</item> and <item>item 2</item></ink><ink foo='second'>this is the <item>second ink</item> and <item>fourth item</item></ink></xml>")
+          document = @klass.parse("<xml><ink foo='test'>hello <item>item text</item> and
+                                  <item>item 2</item></ink><ink foo='second'>this is the <item>second ink</item> and <item>fourth item</item></ink></xml>")
           document.inks.first.items.should == ['item text', 'item 2']
           document.inks.first.mixed_content.should == 'hello item text and item 2'
         end
