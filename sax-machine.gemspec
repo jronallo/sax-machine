@@ -1,13 +1,13 @@
 # -*- encoding: utf-8 -*-
 
 Gem::Specification.new do |s|
-  s.name = %q{sax-machine}
+  s.name = %q{jronallo-sax-machine}
   s.version = "0.0.16"
 
   s.required_rubygems_version = Gem::Requirement.new(">= 0") if s.respond_to? :required_rubygems_version=
-  s.authors = ["Philip MCmahon"]
+  s.authors = ["Paul Dix","Philip MCmahon", "Jason Ronallo"]
   s.date = %q{2010-11-14}
-  s.email = %q{philip@packetnode.com}
+  s.email = %q{jronallo@gmail.com}
   s.files = [
     "lib/sax-machine.rb",
     "lib/sax-machine/sax_config.rb",
@@ -19,7 +19,7 @@ Gem::Specification.new do |s|
     ".rspec",
     "spec/spec_helper.rb",
     "spec/sax-machine/sax_document_spec.rb"]
-  s.homepage = %q{http://github.com/pauldix/sax-machine}
+  s.homepage = %q{https://github.com/jronallo/sax-machine}
   s.require_paths = ["lib"]
   s.rubygems_version = %q{1.3.1}
   s.summary = %q{Declarative SAX Parsing with Nokogiri}
@@ -37,3 +37,4 @@ Gem::Specification.new do |s|
     s.add_dependency(%q<nokogiri>, ["> 0.0.0"])
   end
 end
+
