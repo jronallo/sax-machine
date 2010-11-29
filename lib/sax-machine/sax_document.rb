@@ -74,9 +74,13 @@ module SAXMachine
       attr_writer options[:as] unless instance_methods.detect{|im| im.to_s == "#{options[:as]}="}
     end
 
-    def has_mixed_content
+    def has_mixed_content(*args)
       attr_accessor :mixed_content
       @mixed_content = ''
+      if args.include? :transformed_content
+        attr_accessor :transformed_content
+        @transformed_content = ''
+      end
     end
 
     def sax_config

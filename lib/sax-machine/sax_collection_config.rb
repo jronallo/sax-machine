@@ -1,14 +1,14 @@
 module SAXMachine
   class SAXConfig
-    
+
     class CollectionConfig
       attr_reader :name
-      
+
       def initialize(name, options)
         @name   = name.to_s
         @class  = options[:class]
         @as     = options[:as].to_s
-        
+
         if options.has_key?(:with)
           # for faster comparisons later
           @with = options[:with].to_a.flatten.collect {|o| o.to_s}
@@ -16,11 +16,11 @@ module SAXMachine
           @with = nil
         end
       end
-      
+
       def accessor
         as
       end
-      
+
       def attrs_match?(attrs)
         if @with
           @with == (@with & attrs)
@@ -31,15 +31,16 @@ module SAXMachine
 
       def data_class
         @class || @name
-      end      
-      
+      end
+
     protected
-      
+
       def as
         @as
       end
-      
+
     end
-    
+
   end
 end
+

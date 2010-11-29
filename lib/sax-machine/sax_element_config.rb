@@ -1,28 +1,28 @@
 module SAXMachine
   class SAXConfig
-    
+
     class ElementConfig
-      attr_reader :name, :setter, :data_class, :collection
-      
+      attr_reader :name, :setter, :data_class, :collection, :start_tag, :end_tag
+
       def initialize(name, options)
         @name = name.to_s
-        
+
         if options.has_key?(:with)
           # for faster comparisons later
           @with = options[:with].to_a.flatten.collect {|o| o.to_s}
         else
           @with = nil
         end
-        
+
         if options.has_key?(:value)
           @value = options[:value].to_s
         else
           @value = nil
         end
-        
+
         @as = options[:as]
         @collection = options[:collection]
-        
+
         if @collection
           @setter = "add_#{options[:as]}"
         else
@@ -30,6 +30,9 @@ module SAXMachine
         end
         @data_class = options[:class]
         @required = options[:required]
+
+        @start_tag = options[:start_tag]
+        @end_tag = options[:end_tag]
       end
 
       def column
@@ -43,7 +46,7 @@ module SAXMachine
       def value_from_attrs(attrs)
         attrs.index(@value) ? attrs[attrs.index(@value) + 1] : nil
       end
-      
+
       def attrs_match?(attrs)
         if @with
           @with == (@with & attrs)
@@ -51,15 +54,16 @@ module SAXMachine
           true
         end
       end
-      
+
       def has_value_and_attrs_match?(attrs)
         !@value.nil? && attrs_match?(attrs)
       end
-      
+
       def collection?
         @collection
       end
     end
-    
+
   end
 end
+

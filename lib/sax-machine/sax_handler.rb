@@ -7,17 +7,15 @@ module SAXMachine
     def initialize(object)
       @stack = [[object, nil, ""]]
       @parsed_configs = {}
-      @mixed_content = nil
+      @mixed_content = {}
+      @transformed_content = {}
     end
 
     def characters(string)
       object, config, value = stack.last
       value << string
-      if @mixed_content
-        @mixed_content.each do |k,v|
-         v << string
-        end
-      end
+      @mixed_content.each{|k,v| v << string } if !@mixed_content.empty?
+      @transformed_content.each{|k,v| v << string } if !@transformed_content.empty?
     end
 
     def cdata_block(string)
@@ -32,10 +30,14 @@ module SAXMachine
         if collection_config = sax_config.collection_config(name, attrs)
           new_collection_instance = collection_config.data_class.new
           stack.push [object = new_collection_instance, collection_config, ""]
+          #mixed_content additions
           if new_collection_instance.respond_to? :mixed_content
             new_collection_instance.mixed_content = ''
-            @mixed_content ||= {}
             @mixed_content[name] = ''
+            if new_collection_instance.respond_to?(:transformed_content)
+              new_collection_instance.transformed_content = ''
+              @transformed_content[name] = ''
+            end
           end
           object, sax_config, is_collection = object, object.class.sax_config, true
         end
@@ -50,13 +52,21 @@ module SAXMachine
           #stack.push [element_config.data_class ? element_config.data_class.new : object, element_config, ""]
           if element_config.data_class
             new_instance = element_config.data_class.new
+            #mixed_content additions
             if new_instance.respond_to? :mixed_content
               new_instance.mixed_content = ''
-              @mixed_content ||= {}
               @mixed_content[name] = ''
+              if new_instance.respond_to? :transformed_content
+                new_instance.transformed_content = ''
+                @transformed_content[name] = ''
+              end
             end
             stack.push [new_instance, element_config, '']
           else
+            if stack.last.first.respond_to?(:transformed_content) and
+                @transformed_content[stack.last[1].name] and element_config.start_tag
+              @transformed_content[stack.last[1].name]  << element_config.start_tag
+            end
             stack.push [object, element_config, ""]
           end
         end
@@ -65,9 +75,15 @@ module SAXMachine
 
     def end_element(name)
       (object, tag_config, _), (element, config, value) = stack[-2..-1]
-      if stack.last.first.respond_to?(:mixed_content) and @mixed_content and @mixed_content[stack.last[1].name]
-        stack.last.first.mixed_content << @mixed_content[stack.last[1].name].gsub("\n", ' ').gsub(/\s+/, ' ')
+      if object.respond_to?(:transformed_content) and config.respond_to?(:end_tag) and config.end_tag
+        @transformed_content[tag_config.name] << config.end_tag
+      end
+      if element.respond_to?(:mixed_content) and @mixed_content[stack.last[1].name]
+        element.mixed_content << @mixed_content[stack.last[1].name].gsub("\n", ' ').gsub(/\s+/, ' ')
         @mixed_content.delete(stack.last[1].name)
+        if element.respond_to?(:transformed_content) and @transformed_content[stack.last[1].name]
+          element.transformed_content << @transformed_content[stack.last[1].name]
+        end
       end
       return unless stack.size > 1 && config && config.name.to_s == name.to_s
 
