@@ -2,7 +2,7 @@ module SAXMachine
   class SAXConfig
 
     class CollectionConfig
-      attr_reader :name
+      attr_reader :name, :start_tag, :end_tag
 
       def initialize(name, options)
         @name   = name.to_s
@@ -15,6 +15,9 @@ module SAXMachine
         else
           @with = nil
         end
+
+        @start_tag = options[:start_tag]
+        @end_tag = options[:end_tag]
       end
 
       def accessor

@@ -42,7 +42,6 @@ module SAXMachine
           object, sax_config, is_collection = object, object.class.sax_config, true
         end
         sax_config.element_configs_for_attribute(name, attrs).each do |ec|
-
           unless parsed_config?(object, ec)
             object.send(ec.setter, ec.value_from_attrs(attrs))
             mark_as_parsed(object, ec)
@@ -56,18 +55,19 @@ module SAXMachine
             if new_instance.respond_to? :mixed_content
               new_instance.mixed_content = ''
               @mixed_content[name] = ''
-              if new_instance.respond_to? :transformed_content
-                new_instance.transformed_content = ''
-                @transformed_content[name] = ''
-              end
             end
             stack.push [new_instance, element_config, '']
           else
-            if stack.last.first.respond_to?(:transformed_content) and
-                @transformed_content[stack.last[1].name] and element_config.start_tag
-              @transformed_content[stack.last[1].name]  << element_config.start_tag
-            end
             stack.push [object, element_config, ""]
+          end
+        end
+        if !@transformed_content.empty?
+          if element_config and element_config.start_tag
+            @transformed_content.each{|k,v| v << element_config.start_tag }
+          end
+          if collection_config and collection_config.start_tag
+            #require 'ruby-debug'; debugger if name == 'tem'
+            @transformed_content.each{|k,v| v << collection_config.start_tag unless k == name }
           end
         end
       end
@@ -75,14 +75,15 @@ module SAXMachine
 
     def end_element(name)
       (object, tag_config, _), (element, config, value) = stack[-2..-1]
-      if object.respond_to?(:transformed_content) and config.respond_to?(:end_tag) and config.end_tag
-        @transformed_content[tag_config.name] << config.end_tag
+      if  config.respond_to?(:end_tag) and config.end_tag
+        @transformed_content.each{|k,v| v << config.end_tag unless k == name }
       end
       if element.respond_to?(:mixed_content) and @mixed_content[stack.last[1].name]
         element.mixed_content << @mixed_content[stack.last[1].name].gsub("\n", ' ').gsub(/\s+/, ' ')
         @mixed_content.delete(stack.last[1].name)
-        if element.respond_to?(:transformed_content) and @transformed_content[stack.last[1].name]
-          element.transformed_content << @transformed_content[stack.last[1].name]
+        if element.respond_to?(:transformed_content) and @transformed_content[name]
+          element.transformed_content << @transformed_content[name]
+          @transformed_content.delete(stack.last[1].name)
         end
       end
       return unless stack.size > 1 && config && config.name.to_s == name.to_s

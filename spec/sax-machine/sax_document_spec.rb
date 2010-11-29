@@ -381,10 +381,7 @@ describe "SAXMachine" do
           document.inks.first.transformed_content.should eq('hello <thing class="item">item 1 of text</thing> and SM')
           document.inks.first.mixed_content.should eq('hello item 1 of text and SM')
         end
-
-
       end
-
 
       describe "when there is a mixed content element within a mixed content element" do
         before :each do
@@ -413,6 +410,34 @@ describe "SAXMachine" do
         end
       end
 
+      describe "when there is a mixed content element within a mixed content element with transformed content" do
+        before :each do
+          class Item
+            include SAXMachine
+            has_mixed_content(:transformed_content)
+            elements :ntry, :as => :entries, :start_tag => '<elem>', :end_tag => '</elem>'
+          end
+          class Ink
+            include SAXMachine
+            has_mixed_content(:transformed_content)
+            elements :tem, :as => :tems, :class => Item, :start_tag => '<thing>', :end_tag => '</thing>'
+          end
+          @klass = Class.new do
+            include SAXMachine
+            elements :ink, :as => :inks, :class => Ink
+          end
+        end
+
+        it 'should have transformed content all the way down' do
+          document = @klass.parse("<ink foo='test'>hello <tem><ntry>item</ntry> 1 of <ntry>text</ntry></tem> and <tem>item 2</tem></ink>")
+          document.inks.first.tems.first.entries = ['item', 'text']
+          document.inks.first.tems.first.mixed_content.should == 'item 1 of text'
+          document.inks.first.tems.last.mixed_content.should == 'item 2'
+          document.inks.first.mixed_content.should == 'hello item 1 of text and item 2'
+          document.inks.first.transformed_content.should == 'hello <thing><elem>item</elem> 1 of <elem>text</elem></thing> and <thing>item 2</thing>'
+          document.inks.first.tems.first.transformed_content.should == '<elem>item</elem> 1 of <elem>text</elem>'
+        end
+      end
 
 
     end
